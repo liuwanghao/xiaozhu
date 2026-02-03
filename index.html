@@ -1,599 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>2026年班制日历</title>
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      body {
+          background-color: #f5f5f5;
+          padding: 10px;
+      }
+      .container {
+          max-width: 750px;
+          margin: 0 auto;
+      }
+      .header {
+          text-align: center;
+          padding: 15px 0;
+          color: #333;
+      }
+      .header h1 {
+          font-size: 24px; /* 标题略放大 */
+          margin-bottom: 5px;
+      }
+      .header .desc {
+          font-size: 15px; /* 说明文字放大 */
+          color: #666;
+      }
+      /* 月份容器 */
+      .month-card {
+          background-color: #fff;
+          border-radius: 8px;
+          padding: 12px; /* 内边距略增 */
+          margin-bottom: 15px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      .month-title {
+          font-size: 20px; /* 月份标题放大 */
+          font-weight: bold;
+          color: #222;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #eee;
+      }
+      /* 日历网格 */
+      .calendar-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 6px; /* 网格间距略增 */
+      }
+      /* 星期表头 */
+      .week-header {
+          text-align: center;
+          font-size: 14px; /* 星期文字放大 */
+          color: #999;
+          padding: 10px 0; /* 内边距增加 */
+          background-color: #f8f8f8;
+          border-radius: 4px;
+          font-weight: bold;
+      }
+      /* 日期单元格 */
+      .day-cell {
+          aspect-ratio: 1/1.1; /* 微调比例，适配更大的文字 */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          padding: 4px; /* 增加内边距，避免文字溢出 */
+          position: relative;
+      }
+      /* 空单元格 */
+      .day-cell.empty {
+          background-color: #f8f8f8;
+          color: transparent;
+      }
+      /* 核心：放大日期和班次文字 */
+      .day-cell .date {
+          font-size: 18px; /* 日期从14px→18px，明显放大 */
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 3px; /* 增加间距 */
+      }
+      .day-cell .shift {
+          font-size: 12px; /* 班次从10px→12px，放大且更清晰 */
+          padding: 3px 6px; /* 增加内边距，文字更舒展 */
+          border-radius: 4px;
+          color: #fff;
+          white-space: nowrap; /* 防止文字换行 */
+      }
+      /* 班次颜色（保持不变，更醒目） */
+      .shift-white {
+          background-color: #4299e1;
+      }
+      .shift-night {
+          background-color: #718096;
+      }
+      .shift-rest {
+          background-color: #48bb78;
+      }
+      /* 底部说明 */
+      .footer {
+          margin-top: 20px;
+          padding: 12px;
+          background-color: #fff;
+          border-radius: 8px;
+          font-size: 14px; /* 说明文字放大 */
+          color: #666;
+          line-height: 1.6;
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>2026年班制日历</h1>
+    <p class="desc">轮班规则：夜班→休息→白班（3天循环） | 基准日：2026-02-02 夜班</p>
+    <p>🔹 白班：8:00 - 20:00 | 🔹 夜班：20:00 - 次日8:00 | 🔹 休息：无工作时间</p>
+  </div>
+
+  <div id="calendar-container"></div>
+</div>
+
 <script>
-import menusList from '@/router/modules/gpm2.js'
-import matchUrl, { removeChildrenByNames, hasDynamicParams } from './utils/menuMatch.js'
-import * as cache from '@/views/Gpm2/components/data/cache.js'
-import Dashboard from '@/views/Gpm2/assets/menu/icon-dashboard.svg'
-import Realtimetrends from '@/views/Gpm2/assets/menu/icon-realtimetrends.svg'
-import PerformanceStatistics from '@/views/Gpm2/assets/menu/icon-performance-statistics.svg'
-import PerformanceOverview from '@/views/Gpm2/assets/menu/icon-performance-overview.svg'
-import IndexAnalysis from '@/views/Gpm2/assets/menu/icon-index-analysis.svg'
-import PerformanceDetails from '@/views/Gpm2/assets/menu/icon-performance-details.svg'
-import AbnormalDataScreening from '@/views/Gpm2/assets/menu/icon-abnormal-data-screening.svg'
-import HardwarePerformanceAnalysis from '@/views/Gpm2/assets/menu/icon-hardware-performance-analysis.svg'
-const map = {
-  数据总览: Dashboard,
-  实时数据: Realtimetrends,
-  'GPM Insights': PerformanceOverview,
-  性能统计: PerformanceStatistics,
-  性能概览: PerformanceOverview,
-  指标分析: IndexAnalysis,
-  告警系统: { icon: 'icon-yujing' },
-  运营数据: { icon: 'icon-yunyingshuju' },
-  单用户数据: { icon: 'icon-manageusers' },
-  性能详情: PerformanceDetails,
-  硬件性能分析: HardwarePerformanceAnalysis,
-  对比分析: { icon: 'icon-duibifenxi' },
-  GPM设置: { icon: 'icon-GPMshezhi' },
-  异常数据筛查: AbnormalDataScreening,
-  玩家行为洞察: { icon: 'icon-icon_look' },
-}
-
-// 标准化路径比较（只去除查询参数，保留哈希）
-const normalizePath = (path) => {
-  if (!path) return ''
-  // 只去除查询参数，保留哈希部分用于哈希路由
-  return path.split('?')[0]
-}
-
-// 根据路径生成路由信息
-const generateRouteInfo = (path, menus, appId, server) => {
-  // 查找对应的菜单项，判断原始路径是否有动态参数
-  let hasDynamicParamsFlag = false
-  const findMenuItem = (menuItems) => {
-    for (const item of menuItems) {
-      const originalPath = item.path
-      if (originalPath && hasDynamicParams(originalPath)) {
-        // 处理动态路径
-        const processedPath = originalPath?.replace(':server', server)?.replace(':app', appId)
-        if (processedPath === path) {
-          hasDynamicParamsFlag = true
-          return true
-        }
-      } else if (originalPath === path) {
-        // 静态路径
-        hasDynamicParamsFlag = false
-        return true
-      }
-      // 检查子菜单
-      if (item.children && item.children.length) {
-        if (findMenuItem(item.children)) {
-          return true
-        }
-      }
-    }
-    return false
-  }
-  findMenuItem(menus)
-
-  return {
-    path,
-    query: hasDynamicParamsFlag
-      ? {}
-      : {
-          AppId: appId,
-          server,
-        },
-  }
-}
-
-// 处理菜单选择事件，如果当前路径和菜单项路径相同，则阻止路由跳转
-const handleSelect = (menus, props, router) => (index) => {
-  const currentPath = props.curRoutePath
-
-  const normalizedCurrentPath = normalizePath(currentPath)
-  const normalizedMenuPath = normalizePath(index)
-
-  // 如果路径相同，阻止路由跳转
-  if (normalizedCurrentPath === normalizedMenuPath) {
-    return
+  function getShiftInfo(date) {
+    const baseDate = new Date(2026, 1, 2);
+    const timeDiff = date - baseDate;
+    const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const shiftCycle = [
+      { name: '夜班', class: 'shift-night', time: '20:00-次日8:00' },
+      { name: '休息', class: 'shift-rest', time: '无工作时间' },
+      { name: '白班', class: 'shift-white', time: '8:00-20:00' }
+    ];
+    const shiftIndex = (daysDiff % 3 + 3) % 3;
+    return shiftCycle[shiftIndex];
   }
 
-  // 如果路径不同，进行路由跳转
-  if (router) {
-    const routeInfo = generateRouteInfo(index, menus, props.appId, props.server)
-    router.push(routeInfo)
+  function generateMonthCalendar(year, month) {
+    const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+    const monthCard = document.createElement('div');
+    monthCard.className = 'month-card';
+
+    const monthTitle = document.createElement('div');
+    monthTitle.className = 'month-title';
+    monthTitle.textContent = `${year}年${monthNames[month]}`;
+    monthCard.appendChild(monthTitle);
+
+    const calendarGrid = document.createElement('div');
+    calendarGrid.className = 'calendar-grid';
+
+    weekNames.forEach(week => {
+      const weekHeader = document.createElement('div');
+      weekHeader.className = 'week-header';
+      weekHeader.textContent = week;
+      calendarGrid.appendChild(weekHeader);
+    });
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const firstDayWeek = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
+
+    for (let i = 0; i < firstDayWeek; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'day-cell empty';
+      calendarGrid.appendChild(emptyCell);
+    }
+
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const currentDate = new Date(year, month, day);
+      const shiftInfo = getShiftInfo(currentDate);
+
+      const dayCell = document.createElement('div');
+      dayCell.className = 'day-cell';
+
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'date';
+      dateSpan.textContent = day;
+
+      const shiftSpan = document.createElement('span');
+      shiftSpan.className = `shift ${shiftInfo.class}`;
+      shiftSpan.textContent = shiftInfo.name;
+      shiftSpan.title = shiftInfo.time;
+
+      dayCell.appendChild(dateSpan);
+      dayCell.appendChild(shiftSpan);
+      calendarGrid.appendChild(dayCell);
+    }
+
+    monthCard.appendChild(calendarGrid);
+    return monthCard;
   }
-}
 
-export default {
-  functional: true,
-  name: 'menusGpm',
-  props: {
-    isCollapsed: { type: Boolean, default: false },
-    curRoutePath: { type: String, default: '' },
-    appId: { type: [String, Number], default: '' },
-    server: { type: [String, Number], default: '' },
-    permission: { type: [String, Number], default: 0 },
-  },
-  render: (h, context) => {
-    let menus = [1, 2].includes(context.props.permission)
-      ? menusList
-      : menusList.filter((obj) => obj.permission !== 'admin')
-
-    const platform = cache.get('platform', 'configGroup', 'platformStateName')
-
-    if (platform === 'windows') {
-      removeChildrenByNames(menus, [
-        {
-          parentName: '硬件性能分析',
-          childNamesToRemove: ['SoC性能分析', 'GPU性能分析'],
-        },
-        {
-          parentName: 'GPM设置',
-          childNamesToRemove: ['机型自定义分档', '符号表管理'],
-        },
-        // {
-        //   parentName: '异常数据筛查',
-        //   childNamesToRemove: ['崩溃分析'],
-        // },
-        {
-          parentName: '异常数据筛查',
-          childNamesToRemove: ['ANR分析'],
-        },
-        {
-          parentName: '异常数据筛查',
-          childNamesToRemove: ['错误分析'],
-        },
-      ])
+  function generateYearCalendar(year) {
+    const calendarContainer = document.getElementById('calendar-container');
+    for (let month = 0; month < 12; month++) {
+      const monthCalendar = generateMonthCalendar(year, month);
+      calendarContainer.appendChild(monthCalendar);
     }
-    if (platform === 'harmonyos') {
-      removeChildrenByNames(menus, [
-        {
-          parentName: 'GPM设置',
-          childNamesToRemove: ['机型自定义分档', '符号表管理'],
-        },
-        {
-          parentName: '异常数据筛查',
-          childNamesToRemove: ['崩溃分析'],
-        },
-        {
-          parentName: '异常数据筛查',
-          childNamesToRemove: ['ANR分析'],
-        },
-      ])
-    }
-    if (platform === 'ios') {
-      removeChildrenByNames(menus, [
-        {
-          parentName: '异常数据筛查',
-          childNamesToRemove: ['ANR分析'],
-        },
-      ])
-    }
+  }
 
-    // 不显示异常报告详情的菜单
-    menus = menus
-      .map((obj) => {
-        if (obj.name === '异常数据筛查') {
-          obj.children = obj.children.filter((o) => o.name !== '异常报告详情' && !o.name.includes('问题详情'))
-          return obj
-        }
-        return obj
-      })
-      ?.filter((o) => o.name !== '告警详情')
-    const matchRoute = matchUrl(context.props.curRoutePath)
-
-    return h(
-      'el-menu',
-      {
-        attrs: {
-          'default-active': matchRoute,
-          activeIndex: matchRoute,
-        },
-        staticClass: 'gpm2-menu',
-        props: {
-          activeIndex: matchRoute,
-          collapse: context.props.isCollapsed, // 添加折叠属性
-        },
-        on: {
-          select: handleSelect(menus, context.props, context.parent.$router),
-        },
-      },
-      menus.map((item) => {
-        // ======== 包含路由参数的页面支持新链接 ========
-        let p = item.path
-        const hasDynamicParamsFlag = hasDynamicParams(p)
-        if (hasDynamicParamsFlag) {
-          p = p?.replace(':server', context.props.server)?.replace(':app', context.props.appId)
-        }
-        // ======== /包含路由参数的页面支持新链接 =======
-        if (item.children && item.children.length) {
-          const submenuTitleContent = h(
-            'div',
-            {
-              staticClass: 'title-container',
-            },
-            map[item.name]?.icon
-              ? [h('i', { staticClass: `iconfont ${map[item.name].icon} icon` }), h('div', item.name)]
-              : [
-                  h('i', { staticClass: 'icon' }, [
-                    h('img', { staticClass: 'img-icon', attrs: { src: map[item.name] } }),
-                  ]),
-                  h('div', item.name),
-                ]
-          )
-
-          // 创建子菜单项，在折叠状态下在顶部添加一级菜单标题
-          const submenuChildren = item.children.map((i) => {
-            let pChild = i.path
-            const hasDynamicParamsFlag = hasDynamicParams(pChild)
-            if (hasDynamicParamsFlag) {
-              pChild = pChild?.replace(':server', context.props.server)?.replace(':app', context.props.appId)
-            }
-            return h(
-              'el-menu-item',
-              {
-                attrs: {
-                  index: pChild,
-                },
-              },
-              [
-                h('template', { slot: 'title' }, [
-                  h(
-                    'div',
-                    {
-                      staticClass: 'title-container',
-                    },
-                    [h('div', i.name)]
-                  ),
-                ]),
-              ]
-            )
-          })
-
-          // 在折叠状态下，在子菜单顶部添加一级菜单标题
-          const menuItems = context.props.isCollapsed
-            ? [
-                h(
-                  'div',
-                  {
-                    staticClass: 'submenu-parent-title',
-                    staticStyle: {
-                      padding: '8px 20px',
-                      backgroundColor: 'rgba(28, 43, 59, 0.95)',
-                      color: 'rgba(191, 191, 191, 1)',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      borderBottom: '1px solid rgba(0, 0, 0, 0.2)',
-                      cursor: 'default',
-                    },
-                  },
-                  item.name
-                ),
-                ...submenuChildren,
-              ]
-            : submenuChildren
-
-          return h(
-            'el-submenu',
-            {
-              attrs: {
-                index: p,
-              },
-            },
-            [h('template', { slot: 'title' }, [submenuTitleContent]), ...menuItems]
-          )
-        }
-        return h(
-          'el-menu-item',
-          {
-            attrs: {
-              index: p,
-            },
-          },
-          [
-            h(
-              'div',
-              {
-                staticClass: 'title-container',
-              },
-              map[item.name]?.icon
-                ? [h('i', { staticClass: `iconfont ${map[item.name].icon} icon` }), h('div', item.name)]
-                : [
-                    h('i', { staticClass: 'icon' }, [
-                      h('img', { staticClass: 'img-icon', attrs: { src: map[item.name] } }),
-                    ]),
-                    h('div', item.name),
-                  ]
-            ),
-          ]
-        )
-      })
-    )
-  },
-}
+  window.onload = function() {
+    generateYearCalendar(2026);
+  };
 </script>
-
-<style>
-/* 添加全局过渡效果 */
-.el-menu--collapse-transition {
-  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, margin 0.3s ease-in-out;
-}
-
-.gpm2-menu {
-  font-style: normal;
-  width: 100%;
-  border: none;
-  /* padding-top: 14px; */
-  transition: width 0.3s ease-in-out;
-}
-.gpm2-menu .title-container {
-  position: absolute;
-  right: 0;
-  /* width: 218px; */
-  height: 16px;
-  line-height: 16px;
-  width: 160px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: left;
-  transition: all 0.3s ease-in-out;
-  div {
-    height: 16px;
-    /* padding-left: 10px; */
-    transition: all 0.3s ease-in-out;
-  }
-}
-
-.gpm2-menu .el-submenu {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.gpm2-menu .el-submenu__icon-arrow:before {
-  display: block;
-  width: 10px;
-  height: 10px;
-  content: '';
-  background: url('~@/views/Gpm2/assets/navbar/menu-item-arrow-icon.svg') no-repeat center;
-}
-
-.el-menu--collapse .title-container div {
-  opacity: 0;
-}
-
-.el-menu--collapse .title-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  position: static;
-  right: auto;
-  padding: 0;
-  margin: 0;
-  transition: all 0.3s ease-in-out;
-}
-
-.el-menu--collapse .title-container i {
-  position: static;
-  margin: 0 auto;
-  left: auto;
-  top: auto;
-  transform: none;
-  transition: all 0.3s ease-in-out;
-}
-
-.el-menu--collapse .title-container div {
-  display: none;
-}
-
-/* 确保折叠状态下菜单项的图标容器可见 */
-.el-menu--collapse .title-container {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  position: static !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transition: all 0.3s ease-in-out;
-}
-
-.el-menu--collapse .title-container i.iconfont.icon {
-  opacity: 1 !important;
-  display: inline-block !important;
-  position: relative;
-  left: 0;
-  top: 0;
-  transform: none;
-  visibility: visible !important;
-  transition: all 0.3s ease-in-out;
-  margin: 0 auto;
-  width: 100%;
-  text-align: center;
-}
-
-.gpm2-menu .el-menu {
-  background-color: transparent;
-}
-.el-menu--popup {
-  background-color: rgba(28, 43, 59, 1);
-  .el-menu-item {
-    color: rgba(191, 191, 191, 1);
-    font-size: 14px !important;
-    font-weight: 400 !important;
-  }
-}
-.gpm2-menu .el-menu-item {
-  /* font-size: 16px; */
-  height: 54px;
-  padding: 16px 0px;
-  display: flex;
-  align-items: center;
-  transition: none !important;
-}
-.el-menu-item:focus,
-.el-submenu__title:focus {
-  background-color: transparent !important;
-}
-
-.el-menu--inline {
-  .el-menu-item:last-child {
-    border-bottom: none;
-  }
-}
-.gpm2-menu .el-submenu__title {
-  /* font-size: 16px; */
-  height: 54px;
-  padding: 16px 0px;
-  display: flex;
-  align-items: center;
-  color: rgba(191, 191, 191, 1) !important;
-  background: #1c2b3b;
-  transition: none !important;
-  .el-submenu__icon-arrow {
-    margin-top: -5px;
-  }
-  i {
-    color: rgba(191, 191, 191, 1);
-  }
-}
-
-.gpm2-menu li .icon {
-  position: absolute;
-  left: -28px;
-  top: 10px;
-  transform: translateY(-65%);
-  font-size: 20px;
-  /* color: #3d4d65; */
-  margin: 0 !important;
-  transition: all 0.3s ease-in-out;
-  display: inline-block;
-  z-index: 10;
-  .img-icon {
-    width: 16px;
-    height: 16px;
-    filter: brightness(0) saturate(100%) invert(72%) sepia(4%) saturate(362%) hue-rotate(169deg) brightness(90%)
-      contrast(88%);
-  }
-}
-
-/* 折叠状态下隐藏子菜单标题的文本和箭头 */
-.el-menu--collapse .el-submenu__title .el-submenu__icon-arrow {
-  display: none;
-}
-
-/* 设置折叠状态下菜单的宽度 */
-.el-menu--collapse.gpm2-menu {
-  width: 56px;
-  transition: width 0.3s ease-in-out;
-}
-
-/* 折叠状态下菜单项样式 */
-.el-menu--collapse .el-menu-item,
-.el-menu--collapse .el-submenu__title {
-  padding: 0 !important;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.gpm2-menu li.is-active {
-  position: relative;
-}
-
-.gpm2-menu li.is-active .icon {
-  color: rgba(65, 160, 255, 1) !important;
-  .img-icon {
-    filter: brightness(0) saturate(100%) invert(46%) sepia(74%) saturate(2056%) hue-rotate(186deg) brightness(100%)
-      contrast(101%);
-  }
-}
-
-/* .gpm2-menu li.is-active::before {
-  content: '';
-  height: 100%;
-  width: 6px;
-  background-color: #046bff !important;
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 100;
-  border-bottom-right-radius: 10px;
-  border-top-right-radius: 10px;
-} */
-
-/* .gpm2-menu li.is-opened.is-active .is-active::before {
-  content: '';
-  height: 4px;
-  width: 4px;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: #046bff !important;
-  position: absolute;
-  left: 41px;
-  top: 50%;
-  transform: translateY(-50%);
-    z-index: 100;
-} */
-
-.el-menu-item.is-active {
-  background: transparent !important;
-}
-
-/* 确保折叠状态下菜单项的图标可见且居中 */
-.el-menu--collapse.gpm2-menu li .icon {
-  position: static !important;
-  display: block !important;
-  margin: 0 auto !important;
-  left: 0 !important;
-  top: 0 !important;
-  transform: none !important;
-  opacity: 1 !important;
-  z-index: 10 !important;
-  visibility: visible !important;
-  width: 100% !important;
-  text-align: center !important;
-  font-size: 20px !important;
-  line-height: 54px !important;
-  height: 54px !important;
-  transition: all 0.3s ease-in-out;
-}
-
-/* 子菜单弹出时的一级菜单标题样式 */
-.el-menu--popup .submenu-parent-title {
-  background-color: rgba(29, 47, 66, 1) !important;
-  color: rgba(191, 191, 191, 1) !important;
-  font-size: 12px !important;
-  font-weight: 400 !important;
-  padding: 0 12px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2) !important;
-  cursor: default !important;
-  margin: 0 !important;
-  line-height: 38px !important;
-  display: block !important;
-  white-space: nowrap !important;
-  height: 38px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-}
-
-/* 确保弹出菜单的背景色一致 */
-.el-menu--popup {
-  background-color: rgba(20, 30, 41, 1) !important;
-  padding: 0;
-  border-radius: 4px;
-  min-width: 147px;
-}
-
-.el-menu--popup .el-menu-item {
-  color: rgba(191, 191, 191, 1) !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  height: 46px;
-  line-height: 46px;
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.2);
-}
-.el-menu--popup .el-menu-item.is-active {
-  color: rgba(65, 160, 255, 1) !important;
-}
-</style>
-<style scoped>
-.el-menu-item:hover,
-.el-submenu__title:hover {
-  /*background-color: rgba(255, 255, 225, 0.08) !important;*/
-  background: #2e3c48;
-}
-</style>
+</body>
+</html>
