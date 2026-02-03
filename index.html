@@ -1,214 +1,398 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>2026年班制日历</title>
   <style>
-      * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-      }
-      body {
-          background-color: #f5f5f5;
-          padding: 10px;
-      }
-      .container {
-          max-width: 750px;
-          margin: 0 auto;
-      }
-      .header {
-          text-align: center;
-          padding: 15px 0;
-          color: #333;
-      }
-      .header h1 {
-          font-size: 24px; /* 标题略放大 */
-          margin-bottom: 5px;
-      }
-      .header .desc {
-          font-size: 15px; /* 说明文字放大 */
-          color: #666;
-      }
-      /* 月份容器 */
-      .month-card {
-          background-color: #fff;
-          border-radius: 8px;
-          padding: 12px; /* 内边距略增 */
-          margin-bottom: 15px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      }
-      .month-title {
-          font-size: 20px; /* 月份标题放大 */
-          font-weight: bold;
-          color: #222;
-          margin-bottom: 12px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #eee;
-      }
-      /* 日历网格 */
-      .calendar-grid {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 6px; /* 网格间距略增 */
-      }
-      /* 星期表头 */
-      .week-header {
-          text-align: center;
-          font-size: 14px; /* 星期文字放大 */
-          color: #999;
-          padding: 10px 0; /* 内边距增加 */
-          background-color: #f8f8f8;
-          border-radius: 4px;
-          font-weight: bold;
-      }
-      /* 日期单元格 */
-      .day-cell {
-          aspect-ratio: 1/1.1; /* 微调比例，适配更大的文字 */
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border-radius: 4px;
-          padding: 4px; /* 增加内边距，避免文字溢出 */
-          position: relative;
-      }
-      /* 空单元格 */
-      .day-cell.empty {
-          background-color: #f8f8f8;
-          color: transparent;
-      }
-      /* 核心：放大日期和班次文字 */
-      .day-cell .date {
-          font-size: 18px; /* 日期从14px→18px，明显放大 */
-          font-weight: bold;
-          color: #333;
-          margin-bottom: 3px; /* 增加间距 */
-      }
-      .day-cell .shift {
-          font-size: 12px; /* 班次从10px→12px，放大且更清晰 */
-          padding: 3px 6px; /* 增加内边距，文字更舒展 */
-          border-radius: 4px;
-          color: #fff;
-          white-space: nowrap; /* 防止文字换行 */
-      }
-      /* 班次颜色（保持不变，更醒目） */
-      .shift-white {
-          background-color: #4299e1;
-      }
-      .shift-night {
-          background-color: #718096;
-      }
-      .shift-rest {
-          background-color: #48bb78;
-      }
-      /* 底部说明 */
-      .footer {
-          margin-top: 20px;
-          padding: 12px;
-          background-color: #fff;
-          border-radius: 8px;
-          font-size: 14px; /* 说明文字放大 */
-          color: #666;
-          line-height: 1.6;
-      }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      padding: 10px;
+    }
+
+    .container {
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    /* 新增：今日班制样式 */
+    .today-shift {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .today-shift h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .today-shift .shift-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4299e1;
+    }
+
+    .header {
+      text-align: center;
+      padding: 15px 0;
+      color: #333;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header .desc {
+      font-size: 15px;
+      color: #666;
+    }
+
+    /* 新增：月份切换容器 */
+    .month-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      background-color: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .switch-btn {
+      background-color: #f8f8f8;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 18px;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .switch-btn:active {
+      background-color: #eee;
+    }
+
+    .current-month-text {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* 月份容器 */
+    .month-card {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .month-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* 日历网格 */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    /* 星期表头 */
+    .week-header {
+      text-align: center;
+      font-size: 14px;
+      color: #999;
+      padding: 10px 0;
+      background-color: #f8f8f8;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* 日期单元格 */
+    .day-cell {
+      aspect-ratio: 1/1.1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      padding: 4px;
+      position: relative;
+    }
+
+    /* 今日日期高亮 */
+    .day-cell.today {
+      background-color: #f0f8ff;
+      border: 2px solid #4299e1;
+    }
+
+    /* 空单元格 */
+    .day-cell.empty {
+      background-color: #f8f8f8;
+      color: transparent;
+    }
+
+    /* 日期和班次 */
+    .day-cell .date {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 3px;
+    }
+
+    .day-cell .shift {
+      font-size: 12px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* 班次颜色 */
+    .shift-white {
+      background-color: #4299e1;
+    }
+
+    .shift-night {
+      background-color: #718096;
+    }
+
+    .shift-rest {
+      background-color: #48bb78;
+    }
+
+    /* 底部说明 */
+    .footer {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
   </style>
 </head>
+
 <body>
-<div class="container">
-  <div class="header">
-    <h1>2026年班制日历</h1>
-    <p class="desc">轮班规则：夜班→休息→白班（3天循环） | 基准日：2026-02-02 夜班</p>
-    <p>🔹 白班：8:00 - 20:00 | 🔹 夜班：20:00 - 次日8:00 | 🔹 休息：无工作时间</p>
+  <div class="container">
+    <!-- 新增：今日班制展示 -->
+    <div class="today-shift">
+      <h2>小猪今日班制是：<span id="today-shift-value" class="shift-value"></span></h2>
+    </div>
+
+    <div class="header">
+      <!-- <h1>2026年班制日历</h1> -->
+      <p class="desc">轮班规则：夜班→休息→白班（3天循环） | 基准日：2026-02-02 夜班</p>
+      <p>🔹 白班：8:00 - 20:00 | 🔹 夜班：20:00 - 次日8:00 | 🔹 休息：无工作时间</p>
+    </div>
+
+    <!-- 新增：月份切换按钮 -->
+    <div class="month-switch">
+      <button class="switch-btn" id="prev-month-btn">←</button>
+      <div class="current-month-text" id="current-month-display">2026年二月</div>
+      <button class="switch-btn" id="next-month-btn">→</button>
+    </div>
+
+    <!-- 日历容器（仅显示当月） -->
+    <div id="calendar-container"></div>
   </div>
 
-  <div id="calendar-container"></div>
-</div>
+  <script>
+    // 全局变量：当前显示的年/月
+    let currentYear = 2026;
+    let currentMonth = new Date().getMonth(); // 默认当前月（0=1月，1=2月...）
+    // 强制默认显示2026年（若当前系统时间不是2026，仍显示2026）
+    currentYear = 2026;
 
-<script>
-  function getShiftInfo(date) {
-    const baseDate = new Date(2026, 1, 2);
-    const timeDiff = date - baseDate;
-    const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    const shiftCycle = [
-      { name: '夜班', class: 'shift-night', time: '20:00-次日8:00' },
-      { name: '休息', class: 'shift-rest', time: '无工作时间' },
-      { name: '白班', class: 'shift-white', time: '8:00-20:00' }
-    ];
-    const shiftIndex = (daysDiff % 3 + 3) % 3;
-    return shiftCycle[shiftIndex];
-  }
-
-  function generateMonthCalendar(year, month) {
-    const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
-    const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-
-    const monthCard = document.createElement('div');
-    monthCard.className = 'month-card';
-
-    const monthTitle = document.createElement('div');
-    monthTitle.className = 'month-title';
-    monthTitle.textContent = `${year}年${monthNames[month]}`;
-    monthCard.appendChild(monthTitle);
-
-    const calendarGrid = document.createElement('div');
-    calendarGrid.className = 'calendar-grid';
-
-    weekNames.forEach(week => {
-      const weekHeader = document.createElement('div');
-      weekHeader.className = 'week-header';
-      weekHeader.textContent = week;
-      calendarGrid.appendChild(weekHeader);
-    });
-
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const firstDayWeek = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
-
-    for (let i = 0; i < firstDayWeek; i++) {
-      const emptyCell = document.createElement('div');
-      emptyCell.className = 'day-cell empty';
-      calendarGrid.appendChild(emptyCell);
+    // 1. 获取指定日期的班次信息
+    function getShiftInfo(date) {
+      const baseDate = new Date(2026, 1, 2); // 基准日：2026-02-02（1=2月）
+      const timeDiff = date - baseDate;
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const shiftCycle = [
+        { name: '夜班', class: 'shift-night', time: '20:00-次日8:00' },
+        { name: '休息', class: 'shift-rest', time: '无工作时间' },
+        { name: '白班', class: 'shift-white', time: '8:00-20:00' }
+      ];
+      const shiftIndex = (daysDiff % 3 + 3) % 3; // 处理负数
+      return shiftCycle[shiftIndex];
     }
 
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const currentDate = new Date(year, month, day);
-      const shiftInfo = getShiftInfo(currentDate);
-
-      const dayCell = document.createElement('div');
-      dayCell.className = 'day-cell';
-
-      const dateSpan = document.createElement('span');
-      dateSpan.className = 'date';
-      dateSpan.textContent = day;
-
-      const shiftSpan = document.createElement('span');
-      shiftSpan.className = `shift ${shiftInfo.class}`;
-      shiftSpan.textContent = shiftInfo.name;
-      shiftSpan.title = shiftInfo.time;
-
-      dayCell.appendChild(dateSpan);
-      dayCell.appendChild(shiftSpan);
-      calendarGrid.appendChild(dayCell);
+    // 2. 渲染今日班制
+    function renderTodayShift() {
+      const today = new Date();
+      today.setFullYear(2026); // 强制显示2026年的今日班次（若系统时间不是2026）
+      const shiftInfo = getShiftInfo(today);
+      document.getElementById('today-shift-value').textContent = shiftInfo.name;
+      // 匹配班次颜色
+      document.getElementById('today-shift-value').style.color =
+        shiftInfo.class === 'shift-white' ? '#4299e1' :
+          shiftInfo.class === 'shift-night' ? '#718096' : '#48bb78';
     }
 
-    monthCard.appendChild(calendarGrid);
-    return monthCard;
-  }
+    // 3. 生成指定月份的日历（核心：仅生成当月）
+    function generateMonthCalendar(year, month) {
+      const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+      const weekNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const today = new Date();
+      today.setFullYear(2026); // 强制2026年
+      const todayDate = today.getDate();
+      const todayMonth = today.getMonth();
+      const todayYear = today.getFullYear();
 
-  function generateYearCalendar(year) {
-    const calendarContainer = document.getElementById('calendar-container');
-    for (let month = 0; month < 12; month++) {
-      const monthCalendar = generateMonthCalendar(year, month);
-      calendarContainer.appendChild(monthCalendar);
+      // 清空原有日历
+      const calendarContainer = document.getElementById('calendar-container');
+      calendarContainer.innerHTML = '';
+
+      // 创建月份卡片
+      const monthCard = document.createElement('div');
+      monthCard.className = 'month-card';
+
+      // 月份标题
+      const monthTitle = document.createElement('div');
+      monthTitle.className = 'month-title';
+      monthTitle.textContent = `${year}年${monthNames[month]}`;
+      monthCard.appendChild(monthTitle);
+
+      // 日历网格
+      const calendarGrid = document.createElement('div');
+      calendarGrid.className = 'calendar-grid';
+
+      // 星期表头
+      weekNames.forEach(week => {
+        const weekHeader = document.createElement('div');
+        weekHeader.className = 'week-header';
+        weekHeader.textContent = week;
+        calendarGrid.appendChild(weekHeader);
+      });
+
+      // 获取当月第一天和最后一天
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const firstDayWeek = (firstDay.getDay() === 0) ? 6 : firstDay.getDay() - 1;
+
+      // 填充月初空单元格
+      for (let i = 0; i < firstDayWeek; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day-cell empty';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      // 填充日期单元格
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const currentDate = new Date(year, month, day);
+        const shiftInfo = getShiftInfo(currentDate);
+
+        const dayCell = document.createElement('div');
+        dayCell.className = 'day-cell';
+        // 高亮今日日期
+        if (year === todayYear && month === todayMonth && day === todayDate) {
+          dayCell.classList.add('today');
+        }
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'date';
+        dateSpan.textContent = day;
+
+        const shiftSpan = document.createElement('span');
+        shiftSpan.className = `shift ${shiftInfo.class}`;
+        shiftSpan.textContent = shiftInfo.name;
+        shiftSpan.title = shiftInfo.time;
+
+        dayCell.appendChild(dateSpan);
+        dayCell.appendChild(shiftSpan);
+        calendarGrid.appendChild(dayCell);
+      }
+
+      monthCard.appendChild(calendarGrid);
+      calendarContainer.appendChild(monthCard);
+
+      // 更新顶部月份显示
+      document.getElementById('current-month-display').textContent = `${year}年${monthNames[month]}`;
     }
-  }
 
-  window.onload = function() {
-    generateYearCalendar(2026);
-  };
-</script>
+    // 4. 月份切换逻辑
+    function switchMonth(isNext) {
+      if (isNext) {
+        currentMonth += 1;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear += 1;
+        }
+      } else {
+        currentMonth -= 1;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear -= 1;
+        }
+      }
+      generateMonthCalendar(currentYear, currentMonth);
+    }
+
+    // 5. 滑动手势处理（左右滑切换月份）
+    function initSwipeEvent() {
+      let startX = 0;
+      const calendarContainer = document.getElementById('calendar-container');
+
+      calendarContainer.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+      });
+
+      calendarContainer.addEventListener('touchend', (e) => {
+        const endX = e.changedTouches[0].clientX;
+        const diffX = endX - startX;
+        // 滑动距离超过50px才触发切换
+        if (Math.abs(diffX) > 50) {
+          if (diffX > 0) {
+            // 右滑 → 上一月
+            switchMonth(false);
+          } else {
+            // 左滑 → 下一月
+            switchMonth(true);
+          }
+        }
+      });
+    }
+
+    // 页面加载初始化
+    window.onload = function () {
+      // 渲染今日班制
+      renderTodayShift();
+      // 初始化显示当月日历
+      generateMonthCalendar(currentYear, currentMonth);
+      // 初始化滑动事件
+      initSwipeEvent();
+      // 绑定切换按钮事件
+      document.getElementById('prev-month-btn').addEventListener('click', () => switchMonth(false));
+      document.getElementById('next-month-btn').addEventListener('click', () => switchMonth(true));
+    };
+  </script>
 </body>
+
 </html>
