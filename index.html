@@ -5,12 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>2026年班制日历</title>
+  <!-- <title>2026年班制日历</title> -->
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      /* 强制边框计入尺寸，核心修复 */
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
@@ -64,7 +65,6 @@
       line-height: 1.4;
     }
 
-    /* 顶部翻页按钮+唯一月份标题 样式不变 */
     .month-switch {
       display: flex;
       align-items: center;
@@ -102,18 +102,15 @@
       color: #333;
     }
 
-    /* 日历卡片：删除下方标题后，微调内边距让视觉更贴合 */
     .month-card {
       background-color: #fff;
       border-radius: 8px;
       padding: 10px 8px;
-      /* 无下方标题，内边距无需额外预留 */
       margin-bottom: 12px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       width: 100%;
     }
 
-    /* 日历网格 样式不变 */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -132,6 +129,7 @@
       white-space: nowrap;
     }
 
+    /* 核心修复：所有单元格默认2px透明边框，预留空间 */
     .day-cell {
       aspect-ratio: 1/1;
       display: flex;
@@ -139,19 +137,26 @@
       align-items: center;
       justify-content: center;
       border-radius: 4px;
-      padding: 2px;
+      padding: 0px;
+      /* 适配边框预留空间，减少内边距 */
       position: relative;
       width: 100%;
+      border: 2px solid transparent;
+      /* 预留边框空间，关键！ */
     }
 
+    /* 今日高亮：仅替换边框颜色，尺寸不变，无变形 */
     .day-cell.today {
       background-color: #f0f8ff;
       border: 2px solid #4299e1;
+      /* 仅改颜色，尺寸和其他单元格一致 */
     }
 
     .day-cell.empty {
       background-color: #f8f8f8;
       color: transparent;
+      border: 2px solid transparent;
+      /* 空单元格也预留边框 */
     }
 
     .day-cell .date {
@@ -204,18 +209,15 @@
       <!-- <h1>2026年班制日历</h1> -->
       <p class="desc">轮班规则：夜班→休息→白班（3天循环）</p>
       <!-- <p class="desc">基准日：2026-02-02 夜班</p> -->
-      <p style="font-size:13px; margin-top:3px;">🔹 白班：8:00-20:00 | 🔹 夜班：20:00-次日8:00</p>
-      <p style="font-size:13px; margin-top:3px;">🔹 休息：无工作时间</p>
+      <p style="font-size:13px; margin-top:3px;">🔹 白班：8:00-20:00 | 🔹 夜班：20:00-次日8:00 | 🔹 休息：无工作时间</p>
     </div>
 
-    <!-- 顶部：唯一的翻页按钮+月份标题 -->
     <div class="month-switch">
       <button class="switch-btn" id="prev-month-btn">←</button>
       <div class="current-month-text" id="current-month-display">2026年二月</div>
       <button class="switch-btn" id="next-month-btn">→</button>
     </div>
 
-    <!-- 日历容器：无额外月份标题 -->
     <div id="calendar-container"></div>
   </div>
 
@@ -263,9 +265,6 @@
       const monthCard = document.createElement('div');
       monthCard.className = 'month-card';
 
-      // 【核心删除】移除日历卡片内的下方月份标题代码
-      // 不再创建和添加monthTitle，仅保留日历网格
-
       const calendarGrid = document.createElement('div');
       calendarGrid.className = 'calendar-grid';
 
@@ -292,6 +291,7 @@
 
         const dayCell = document.createElement('div');
         dayCell.className = 'day-cell';
+        // 今日高亮：仅添加类名，样式由CSS控制，无尺寸变化
         if (year === todayYear && month === todayMonth && day === todayDate) {
           dayCell.classList.add('today');
         }
@@ -313,7 +313,6 @@
       monthCard.appendChild(calendarGrid);
       calendarContainer.appendChild(monthCard);
 
-      // 仅更新顶部唯一的月份标题
       document.getElementById('current-month-display').textContent = `${year}年${monthNames[month]}`;
     }
 
